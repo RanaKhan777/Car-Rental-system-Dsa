@@ -1,0 +1,265 @@
+#include "CarRentalSystem.h" // header file for function decleration 
+
+void CarRentalSystem::addCar() {
+    int carId;
+    string carName, carModel, warranty;
+    int carYear;
+    float carPrice;
+
+    cout << "Enter Car ID: ";
+    cin >> carId;
+
+    // Check for duplicate ID
+    if (carExists(carId)) {
+        cout << "Car with this ID already exists. Try again!" << endl;
+        return;
+    }
+
+    cin.ignore();  // Clear the input buffer
+    cout << "Enter Car Name: ";
+    getline(cin, carName);
+    cout << "Enter Car Model: ";
+    getline(cin, carModel);
+    cout << "Enter Car Year: ";
+    cin >> carYear;
+    cout << "Enter Car Price: ";
+    cin >> carPrice;
+    cin.ignore();
+    cout << "Enter Car Warranty: ";
+    getline(cin, warranty);
+
+    Car newCar(carId, carName, carModel, carYear, false, "", carPrice, warranty);
+    cars.push_back(newCar);
+    cout << "Car added successfully!" << endl;
+
+    saveCarsToFile();
+}
+
+void CarRentalSystem::sellCar(int carId) {
+    auto it = find_if(cars.begin(), cars.end(), [carId](const Car& car) {
+        return car.id == carId;
+        });
+
+    if (it != cars.end()) {
+
+        cars.erase(it);
+        cout << "Car sold successfully!" << endl;
+        saveCarsToFile();
+    }
+    else {
+        cout << "Car not found!" << endl;
+    }
+}
+
+void CarRentalSystem::updateCarStatus(int carId, bool isRented) {
+    for (auto& car : cars) {
+        if (car.id == carId) {
+            car.isRented = isRented;
+            cout << "Car status updated successfully!" << endl;
+            saveCarsToFile();
+            return;
+        }
+    }
+    cout << "Car not found!" << endl;
+}
+
+void CarRentalSystem::displayCars() {
+    if (cars.empty()) {
+        cout << "No cars available." << endl;
+        return;
+    }
+
+    cout << setw(5) << "ID" << setw(20) << "Name" << setw(20) << "Model" << setw(10) << "Year" << setw(10) << "Price" << setw(10) << "Status" << setw(15) << "Warranty" << endl;
+    for (const auto& car : cars) {
+        cout << setw(5) << car.id << setw(20) << car.name << setw(20) << car.model << setw(10) << car.year << setw(10) << car.price << setw(10) << (car.isRented ? "Rented" : "Available") << setw(15) << car.warranty << endl;
+    }
+}
+
+void CarRentalSystem::saveCarsToFile() {
+    ofstream carrecord("cars.txt");
+    for (const auto& car : cars) { // car addjustable variale 
+        carrecord << car.id << " " << car.name << " " << car.model << " " << car.year << " " << car.isRented << " " << car.price << " " << car.warranty << endl;
+    }
+}
+
+void CarRentalSystem::loadCarsFromFile() {
+    ifstream checkrecord("cars.txt");
+    int carId, carYear;
+    string carName, carModel, carWarranty;
+    bool isRented;
+    float carPrice;
+
+    while (checkrecord >> carId) { 
+        checkrecord.ignore();
+        getline(checkrecord, carName, ' ');
+        getline(checkrecord, carModel, ' ');
+        checkrecord >> carYear >> isRented >> carPrice;
+        checkrecord.ignore(); // error detection
+        getline(checkrecord, carWarranty);
+        cars.push_back(Car(carId, carName, carModel, carYear, isRented, "", carPrice, carWarranty));
+    }
+}
+
+void CarRentalSystem::processRentalRequest(int carId) {
+
+    auto carIt = find_if(cars.begin(), cars.end(), [carId] (const Car& car) {
+        return car.id == carId;
+        });
+    
+    if (carIt != cars.end() && !carIt->isRented) {
+        int customerId;
+        string customer_name;
+        float price;
+        cout << "Enter Customer ID: ";
+        cin >> customerId;
+        cout << "Enter Customer name: ";
+        cin >> customer_name;
+        cout << "Enter rented price : ";
+        cin >> price;
+
+
+        RentalRequest rentalRequest(carId, customerId, customer_name, price);
+        rentalRequests.push_back(rentalRequest);
+
+        updateCarStatus(carId, true);  // Mark the car as rented
+        cout << "Rental request processed successfully!" << endl;
+        recordTransaction(carId, price);
+        saveRentalRequestsToFile();
+        saveTransactionsToFile();
+       
+    }
+    else {
+        cout << "Car is either unavailable or doesn't exist." << endl;
+    }
+}
+
+void CarRentalSystem::returnRental(int carId) {
+    auto carIt = find_if(cars.begin(), cars.end(), [carId](const Car& car) {
+        return car.id == carId;
+        });
+
+    if (carIt != cars.end() && carIt->isRented) {
+        updateCarStatus(carId, false);
+        cout << "Car returned successfully!" << endl;
+    }
+    else {
+        cout << "Car was not rented or does not exist!" << endl;
+    }
+}
+
+void CarRentalSystem::displayRentalRequests() {
+    if (rentalRequests.empty()) {
+        cout << "No rental requests found." << endl;
+        return;
+    }
+    cout << setw(5) << "Car ID" << setw(15) << "Customer ID" << setw(10) << "Customer name" << setw(10) << "rentalCharge" << endl;
+    for (const auto& request : rentalRequests) {
+        cout << setw(5) << request.carId << setw(15) << request.customerId <<setw(10) << request.c_name << setw(10) << request.totalCharge << endl;
+    }
+}
+
+void CarRentalSystem::saveRentalRequestsToFile() {
+    ofstream outFile("rental_requests.txt");
+    for (const auto& request : rentalRequests) {
+        outFile << request.carId << " " << request.customerId << " " << request.c_name << request.totalCharge << endl;
+    }
+}
+
+void CarRentalSystem::loadRentalRequestsFromFile() {
+    ifstream inFile("rental_requests.txt");
+    int carId, customerId;
+    string customername;
+    float totalCharge;
+
+    while (inFile >> carId >> customerId >> customername >> totalCharge) {
+        rentalRequests.push_back(RentalRequest(carId, customerId, customername, totalCharge));
+    }
+}
+
+void CarRentalSystem::recordTransaction(int carId, float amount) {
+    static int transactionId = 1;
+    transactions.push_back(Transaction(transactionId++, carId, amount));
+}
+
+void CarRentalSystem::displayTransactions() {
+    if (transactions.empty()) {
+        cout << "No transactions found." << endl;
+        return;
+    }
+    cout << setw(5) << "ID" << setw(10) << "Car ID" << setw(10) << "Amount" << endl;
+    for (const auto& transaction : transactions) {
+        cout << setw(5) << transaction.transactionId << setw(10) << transaction.carId << setw(10) << transaction.amount << endl;
+    }
+}
+
+void CarRentalSystem::saveTransactionsToFile() {
+    ofstream outFile("transactions.txt");
+    for (const auto& transaction : transactions) {
+        outFile << transaction.transactionId << " " << transaction.carId << " " << transaction.amount << endl;
+    }
+}
+
+void CarRentalSystem::loadTransactionsFromFile() {
+    ifstream inFile("transactions.txt");
+    int transactionId, carId;
+    float amount;
+
+    while (inFile >> transactionId >> carId >> amount) {
+        transactions.push_back(Transaction(transactionId, carId, amount));
+    }
+}
+
+void CarRentalSystem::serviceCar(int carId, const string& serviceType) {
+    auto carIt = find_if(cars.begin(), cars.end(), [carId](const Car& car) {
+        return car.id == carId;
+        });
+
+    if (carIt != cars.end()) {
+        carIt->serviceStatus = serviceType;
+        cout << "Car serviced with " << serviceType << " successfully!" << endl;
+    }
+    else {
+        cout << "Car not found!" << endl;
+    }
+}
+
+void CarRentalSystem::warrantyExpirationCheck() {
+    for (const auto& car : cars) {
+        // Logic to check warranty expiration based on current date or any other criteria.
+        cout << "Checking warranty for car: " << car.name << endl;
+    }
+}
+
+bool CarRentalSystem::carExists(int carId) {
+    return find_if(cars.begin(), cars.end(), [carId](const Car& car) {
+        return car.id == carId;
+        }) != cars.end();
+}
+
+void CarRentalSystem::deleteRentalRequest(int rentalId) {
+    auto it = remove_if(rentalRequests.begin(), rentalRequests.end(), [rentalId](const RentalRequest& request) {
+        return request.carId == rentalId;
+        });
+
+    if (it != rentalRequests.end()) {
+        rentalRequests.erase(it, rentalRequests.end());
+        cout << "Rental request deleted successfully!" << endl;
+    }
+    else {
+        cout << "Rental request not found!" << endl;
+    }
+}
+
+void CarRentalSystem::deleteTransactionRecord(int transactionId) {
+    auto it = remove_if(transactions.begin(), transactions.end(), [transactionId](const Transaction& transaction) {
+        return transaction.transactionId == transactionId;
+        });
+
+    if (it != transactions.end()) {
+        transactions.erase(it, transactions.end());
+        cout << "Transaction record deleted successfully!" << endl;
+    }
+    else {
+        cout << "Transaction record not found!" << endl;
+    }
+}

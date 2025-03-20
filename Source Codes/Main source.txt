@@ -1,0 +1,229 @@
+#include <iostream>
+#include <limits>
+#include "CarRentalSystem.h"
+#include <thread>
+#include <chrono>
+#include <cstdlib>
+
+using namespace std;
+
+// Function to clear screen (works for Windows)
+void clearScreen() {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+}
+
+// Function to display loading screen
+void showLoadingScreen() {
+    clearScreen();
+    cout << "Welcome to the Car Rental System!" << endl;
+    cout << "Loading system";
+    for (int i = 0; i < 5; ++i) {
+        cout << ".";
+        this_thread::sleep_for(chrono::milliseconds(500));
+    }
+    cout << endl;
+    this_thread::sleep_for(chrono::milliseconds(500));
+}
+
+// Function to show the main menu
+void showMainMenu() {
+    clearScreen();
+    cout << "********** Car Rental Management System **********" << endl;
+    cout << "1. Car Management" << endl;
+    cout << "2. Rental Operations" << endl;
+    cout << "3. Service Management" << endl;
+    cout << "4. Warranty System" << endl;
+    cout << "5. Display Cars" << endl;
+    cout << "6. Display Rental Requests" << endl;
+    cout << "7. Display Transactions" << endl;
+    cout << "8. Delete Record" << endl;
+    cout << "9. Exit" << endl;
+    cout << "Please choose an option: ";
+}
+
+int main() {
+    CarRentalSystem project;
+
+    // Loading screen
+    showLoadingScreen();
+
+    // Load data from files
+    project.loadCarsFromFile();
+    project.loadRentalRequestsFromFile();
+    project.loadTransactionsFromFile();
+
+    bool running = true;
+    while (running) {
+        // Show main menu
+        showMainMenu();
+        int choice;
+        cin >> choice;
+
+        // Clear input buffer
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+        switch (choice) {
+        case 1: { // Car Management
+            int carChoice;
+            cout << "\nCar Management:\n";
+            cout << "1. Add Car\n";
+            cout << "2. Sell Car\n";
+            cout << "3. Update Car Status\n";
+            cout << "Please choose an option: ";
+            cin >> carChoice;
+            cin.ignore();
+
+            if (carChoice == 1) {
+                project.addCar();
+            }
+            else if (carChoice == 2) {
+                int carId;
+                cout << "Enter Car ID to sell: ";
+                cin >> carId;
+                project.sellCar(carId);
+            }
+            else if (carChoice == 3) {
+                int carId;
+                bool isRented;
+                cout << "Enter Car ID to update status: ";
+                cin >> carId;
+                cout << "Is the car rented? (1 for Yes, 0 for No): ";
+                cin >> isRented;
+                project.updateCarStatus(carId, isRented);
+            }
+            else {
+                cout << "Invalid choice!\n";
+            }
+            break;
+        }
+
+        case 2: { // Rental Operations
+            int rentalChoice;
+            cout << "\nRental Operations:\n";
+            cout << "1. Process Rental Request\n";
+            cout << "2. Return Car\n";
+            cout << "Please choose an option: ";
+            cin >> rentalChoice;
+            cin.ignore();
+
+            if (rentalChoice == 1) {
+                int carId;
+                cout << "Enter Car ID to rent: ";
+                cin >> carId;
+                project.processRentalRequest(carId);
+            }
+            else if (rentalChoice == 2) {
+                int carId;
+                cout << "Enter Car ID to return: ";
+                cin >> carId;
+                project.returnRental(carId);
+            }
+            else {
+                cout << "Invalid choice!\n";
+            }
+            break;
+        }
+
+        case 3: { // Service Management
+            int serviceChoice;
+            cout << "\nService Management:\n";
+            cout << "1. Service a Car\n";
+            cout << "Please choose an option: ";
+            cin >> serviceChoice;
+            cin.ignore();
+
+            if (serviceChoice == 1) {
+                int carId;
+                string serviceType;
+                cout << "Enter Car ID to service: ";
+                cin >> carId;
+                cin.ignore();
+                cout << "Enter Service Type (e.g., Tuning, Wash, Repair): ";
+                getline(cin, serviceType);
+                project.serviceCar(carId, serviceType);
+            }
+            else {
+                cout << "Invalid choice!\n";
+            }
+            break;
+        }
+
+        case 4: { // Warranty System
+            cout << "\nWarranty System:\n";
+            project.warrantyExpirationCheck();
+            break;
+        }
+
+        case 5: { // Display Cars
+            project.displayCars();
+            break;
+        }
+
+        case 6: { // Display Rental Requests
+            project.displayRentalRequests();
+            break;
+        }
+
+        case 7: { // Display Transactions
+            project.displayTransactions();
+            break;
+        }
+
+        case 8: { // Delete Record
+            int deleteChoice;
+            cout << "\nDelete Record:\n";
+            cout << "1. Delete Car Record\n";
+            cout << "2. Delete Rental Record\n";
+            cout << "3. Delete Transaction Record\n";
+            cout << "Please choose an option: ";
+            cin >> deleteChoice;
+            cin.ignore();
+
+            if (deleteChoice == 1) {
+                int carId;
+                cout << "Enter Car ID to delete: ";
+                cin >> carId;
+                project.sellCar(carId); // Selling the car is equivalent to deleting it
+            }
+            else if (deleteChoice == 2) {
+                int rentalId;
+                cout << "Enter Rental ID to delete: ";
+                cin >> rentalId;
+                project.deleteRentalRequest(rentalId); // Implement a deleteRentalRequest function as needed
+            }
+            else if (deleteChoice == 3) {
+                int transactionId;
+                cout << "Enter Transaction ID to delete: ";
+                cin >> transactionId;
+                project.deleteTransactionRecord(transactionId); // Implement deleteTransactionRecord function as needed
+            }
+            else {
+                cout << "Invalid choice!\n";
+            }
+            break;
+        }
+
+        case 9: { // Exit Program
+            project.saveCarsToFile();
+            project.saveRentalRequestsToFile();
+            project.saveTransactionsToFile();
+            cout << "Exiting program... Thank you for using the Car Rental System!" << endl;
+            running = false;
+            break;
+        }
+
+        default:
+            cout << "Invalid choice! Please try again." << endl;
+        }
+
+        cout << "\nPress any key to return to the main menu...";
+        cin.ignore();
+        cin.get();
+    }
+
+    return 0;
+}

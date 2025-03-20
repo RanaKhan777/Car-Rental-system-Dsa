@@ -1,0 +1,102 @@
+// ider hum ny all fun ko declear kiya hova ha
+#ifndef CARRENTALSYSTEM_H
+#define CARRENTALSYSTEM_H
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <queue>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+
+using namespace std;
+
+class CarRentalSystem {
+public:
+    struct Car {
+        int id;
+        string name;
+        string model;
+        int year;
+        bool isRented;
+        string serviceStatus;
+        float price;
+        string warranty;
+        // create costructor 
+        Car(int carId = 0, string carName = "", string carModel = "", int carYear = 0, bool rented = false, string service = "", float carPrice = 0.0f, string carWarranty = "")
+        {
+            id = carId;
+            name = carName;
+            model = carModel;
+            year = carYear;
+            isRented = rented;
+            serviceStatus = service;
+            price = carPrice; 
+            warranty = carWarranty;
+        }
+    };
+
+    struct RentalRequest {
+        int carId;
+        int customerId;
+        string c_name;
+        float totalCharge;
+
+        RentalRequest(int cId, int custId = 0, string customer_name = "", float charge = 0.0f)
+            : carId(cId), customerId(custId), c_name(customer_name), totalCharge(charge) {
+        }
+    };
+
+    struct Transaction {
+        int transactionId;
+        int carId;
+        float amount;
+
+        Transaction(int transId = 0, int cId = 0, float transAmount = 0.0f)
+            : transactionId(transId), carId(cId), amount(transAmount) {
+        }
+    };
+
+    vector<Car> cars;
+    vector<RentalRequest> rentalRequests;
+    vector<Transaction> transactions;
+
+    // Car Management
+    void addCar();
+    void sellCar(int carId);
+    void updateCarStatus(int carId, bool isRented);
+    void displayCars();
+    void saveCarsToFile();
+    void loadCarsFromFile();
+
+    // Rental Operations
+    void processRentalRequest(int carId);
+    void returnRental(int carId);
+    void displayRentalRequests();
+    void saveRentalRequestsToFile();
+    void loadRentalRequestsFromFile();
+
+    // Transaction Management
+    void recordTransaction(int carId, float amount);
+    void displayTransactions();
+    void saveTransactionsToFile();
+    void loadTransactionsFromFile();
+
+    // Service Management
+    void serviceCar(int carId, const string& serviceType);
+
+    // Warranty System
+    void warrantyExpirationCheck();
+
+    // Utility Functions
+    bool carExists(int carId);
+    void deleteRentalRequest(int rentalId);
+    void deleteTransactionRecord(int transactionId);
+
+private:
+    //int stringToInt(const string& str);
+    //float stringToFloat(const string& str);
+};
+
+#endif
